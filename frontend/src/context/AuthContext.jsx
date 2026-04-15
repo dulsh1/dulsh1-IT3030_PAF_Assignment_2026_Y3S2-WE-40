@@ -29,9 +29,20 @@ export const AuthProvider = ({ children }) => {
         fetchUser();
     }, []);
 
-    const login = (token) => {
+    const login = async (token) => {
         localStorage.setItem('jwt_token', token);
-        fetchUser();
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Failed to fetch user after login', error);
+            localStorage.removeItem('jwt_token');
+            setUser(null);
+            return null;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const logout = () => {
