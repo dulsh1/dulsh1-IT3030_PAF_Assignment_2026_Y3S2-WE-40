@@ -32,7 +32,6 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    // GET /api/bookings — Admin: all bookings
     @GetMapping
     public ResponseEntity<List<Booking>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
@@ -55,6 +54,11 @@ public class BookingController {
     }
 
     // POST /api/bookings — Create a new booking request
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Booking>> getUserBookings(@PathVariable Long userId) {
+        return ResponseEntity.ok(bookingService.getUserBookings(userId));
+    }
+
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody Map<String, Object> payload) {
         try {
