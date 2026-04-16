@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { NotificationContext } from '../context/NotificationContext';
+import './Toast.css';
 
 const ToastContainer = () => {
     const { notifications, removeNotification } = useContext(NotificationContext);
