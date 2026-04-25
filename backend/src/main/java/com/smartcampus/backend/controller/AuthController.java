@@ -17,7 +17,6 @@ import java.util.Optional;
 
 /**
  * Authentication & User Management REST Controller
- * Member: Samantha (IT234576869) — Module E (Auth & User Management)
  *
  * Endpoints:
  *   GET    /api/auth/me                — Get currently authenticated user profile

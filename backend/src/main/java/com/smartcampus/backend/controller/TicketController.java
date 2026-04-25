@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * Maintenance & Incident Ticketing REST Controller
- * Member: Samantha (IT234576869) — Module C
  *
  * Endpoints:
  *   GET    /api/tickets                            — Admin: all tickets

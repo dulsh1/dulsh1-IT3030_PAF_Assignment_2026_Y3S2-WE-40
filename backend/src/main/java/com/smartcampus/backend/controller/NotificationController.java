@@ -11,7 +11,6 @@ import java.util.Map;
 
 /**
  * Notifications REST Controller
- * Member: Samantha (IT234576869) — Module D
  *
  * Endpoints:
  *   GET  /api/notifications/user/{userId}           — Get all notifications for a user
