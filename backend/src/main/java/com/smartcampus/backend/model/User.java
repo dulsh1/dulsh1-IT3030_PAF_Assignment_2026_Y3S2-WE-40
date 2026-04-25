@@ -1,5 +1,7 @@
 package com.smartcampus.backend.model;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -26,6 +28,12 @@ public class User {
     @Column(nullable = true)
     private String password;
 
+    @Column(nullable = true)
+    private String resetToken;
+
+    @Column(nullable = true)
+    private LocalDateTime resetTokenExpiry;
+
     public User() {}
 
     public User(String email, String name, Role role) {
@@ -48,4 +56,10 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+ 
+    public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
 }

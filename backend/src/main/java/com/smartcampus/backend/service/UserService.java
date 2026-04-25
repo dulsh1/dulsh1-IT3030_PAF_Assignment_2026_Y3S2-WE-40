@@ -89,4 +89,30 @@ public class UserService {
         user.setResetTokenExpiry(null);
         userRepository.save(user);
     }
+<<<<<<< Updated upstream
+=======
+
+    public User updateName(Long userId, String newName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setName(newName);
+        return userRepository.save(user);
+    }
+
+    public void updatePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // If user already has a password, verify the old one
+        if (user.getPassword() != null) {
+            if (oldPassword == null || !passwordEncoder.matches(oldPassword, user.getPassword())) {
+                throw new RuntimeException("Incorrect current password");
+            }
+        }
+
+        // If it's a new password for OAuth user, or verified password for standard user
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+>>>>>>> Stashed changes
 }

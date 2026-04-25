@@ -19,7 +19,7 @@ public class Notification {
 
     private String message;
     
-    private String type; // e.g., INFO, SUCCESS, WARNING
+    private String type; 
     
     private boolean isRead = false;
     

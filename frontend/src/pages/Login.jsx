@@ -42,7 +42,7 @@ const Login = () => {
             const user = await login(token);
             if (!user) { setError('Login failed. Please try again.'); return; }
 
-            if (user.role === 'ROLE_ADMIN') navigate('/admin/panel');
+            if (user.role === 'ROLE_ADMIN') navigate('/dashboard');
             else if (user.role === 'ROLE_TECHNICIAN') navigate('/technician/desk');
             else navigate('/dashboard');
 
@@ -69,6 +69,7 @@ const Login = () => {
             <div style={{ position: 'absolute', top: '10%', left: '10%', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', borderRadius: '50%', zIndex: 0 }} />
             <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)', borderRadius: '50%', zIndex: 0 }} />
 
+<<<<<<< Updated upstream
             <div className="premium-card glass" style={{
                 width: '100%', maxWidth: '440px', padding: '50px',
                 textAlign: 'center', position: 'relative', zIndex: 1
@@ -86,6 +87,12 @@ const Login = () => {
                     Welcome to <span style={{ color: 'var(--primary)' }}>SmartCampus</span>
                 </h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
+=======
+                <div style={{ fontSize: '38px', fontWeight: '900', color: 'var(--text-main)', marginBottom: '32px', letterSpacing: '-1.5px', background: 'linear-gradient(135deg, #fff 0%, #60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    SmartCampus
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '15px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
+>>>>>>> Stashed changes
                     The unified hub for university facilities and resource management.
                 </p>
 
@@ -167,7 +174,7 @@ const Login = () => {
 
                 <div style={{ marginTop: '24px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                        Internal Access Only &bull; University of Smart Campus
+                        Internal Access Only
                     </p>
                 </div>
             </div>
