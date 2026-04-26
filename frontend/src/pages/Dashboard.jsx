@@ -235,7 +235,7 @@ const ReportIncidentModal = ({ onClose, onSuccess, userId }) => {
                         <div>
                             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '6px' }}>Category</label>
                             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
-                                <option value="IT_EQUIPMENT">IT / Technology</option>
+                                <option value="IT EQUIPMENT">IT / Technology</option>
                                 <option value="FURNITURE">Furniture / Hardware</option>
                                 <option value="PLUMBING">Plumbing / Leaks</option>
                                 <option value="OTHER">Other</option>

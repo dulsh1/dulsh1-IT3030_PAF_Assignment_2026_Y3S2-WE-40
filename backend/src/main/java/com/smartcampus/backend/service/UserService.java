@@ -18,7 +18,8 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
@@ -89,8 +90,6 @@ public class UserService {
         user.setResetTokenExpiry(null);
         userRepository.save(user);
     }
-<<<<<<< Updated upstream
-=======
 
     public User updateName(Long userId, String newName) {
         User user = userRepository.findById(userId)
@@ -114,5 +113,4 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
->>>>>>> Stashed changes
 }

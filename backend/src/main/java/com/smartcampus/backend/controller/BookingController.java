@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * Booking Management REST Controller
- *
+ * 
  * Endpoints:
  *   GET    /api/bookings                    — Admin: view all bookings
  *   GET    /api/bookings/{id}               — Get single booking by ID

@@ -6,11 +6,10 @@ import com.smartcampus.backend.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-
-
 /**
  * Maintenance & Incident Ticketing REST Controller
  *
@@ -131,7 +130,7 @@ public class TicketController {
     }
 
     @PostMapping("/{id}/attachments")
-    public ResponseEntity<?> uploadAttachment(@PathVariable("id") Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+    public ResponseEntity<?> uploadAttachment(@PathVariable("id") Long id, @RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(ticketService.uploadAttachment(id, file));
         } catch (Exception e) {

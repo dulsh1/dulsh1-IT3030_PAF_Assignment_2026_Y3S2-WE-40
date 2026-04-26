@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -72,7 +73,7 @@ public class ResourceController {
             @RequestParam("status") String status,
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime,
-            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
+            @RequestParam(value = "image", required = false) MultipartFile image) {
 
         if (name == null || name.isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required");
@@ -94,7 +95,7 @@ public class ResourceController {
             @RequestParam("status") String status,
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime,
-            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
+            @RequestParam(value = "image", required = false) MultipartFile image) {
         return ResponseEntity.ok(resourceService.updateResourceMultipart(id, name, type, capacity, location, status, startTime, endTime, image));
     }
 
