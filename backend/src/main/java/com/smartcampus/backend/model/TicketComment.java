@@ -13,13 +13,11 @@ public class TicketComment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Break circular: TicketComment → Ticket → comments (back to TicketComment)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "comments", "creator", "technician", "resource"})
     private Ticket ticket;
 
-    // Break lazy proxy on User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "notifications"})

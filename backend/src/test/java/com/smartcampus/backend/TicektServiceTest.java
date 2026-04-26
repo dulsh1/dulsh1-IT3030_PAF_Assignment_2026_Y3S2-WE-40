@@ -21,8 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for TicketService — Module C
- * Member: Samantha (IT234576869)
+ * Unit tests for TicketService
  */
 @ExtendWith(MockitoExtension.class)
 class TicketServiceTest {

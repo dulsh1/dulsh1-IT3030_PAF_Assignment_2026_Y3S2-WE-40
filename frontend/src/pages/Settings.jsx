@@ -1,5 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { NotificationContext } from '../context/NotificationContext';
+import api from '../api/axiosConfig';
 
 const roleInfo = {
     ROLE_ADMIN: {
@@ -32,7 +34,71 @@ const roleInfo = {
 };
 
 const Settings = () => {
-    const { user } = useContext(AuthContext);
+    const { user, fetchUser } = useContext(AuthContext);
+    const { showNotification } = useContext(NotificationContext);
+
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [submittingName, setSubmittingName] = useState(false);
+
+    const [isChangingPassword, setIsChangingPassword] = useState(false); // Controls visibility for all users
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [submittingPassword, setSubmittingPassword] = useState(false);
+
+    useEffect(() => {
+        if (user) setNewName(user.name);
+    }, [user]);
+
+    if (!user) return null;
+
+    const handleUpdateName = async () => {
+        if (!newName.trim()) {
+            showNotification('Name cannot be empty', 'error');
+            return;
+        }
+        setSubmittingName(true);
+        try {
+            await api.post('/auth/update-name', { newName });
+            await fetchUser();
+            setIsEditingName(false);
+            showNotification('Profile name updated successfully', 'success');
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to update name', 'error');
+        } finally {
+            setSubmittingName(false);
+        }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (passwordData.newPassword.length < 8) {
+            showNotification('New password must be at least 8 characters', 'error');
+            return;
+        }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            showNotification('New passwords do not match', 'error');
+            return;
+        }
+
+        setSubmittingPassword(true);
+        try {
+            await api.post('/auth/change-password', {
+                oldPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            showNotification('Password updated successfully', 'success');
+            fetchUser(); // To update hasPassword flag
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to change password', 'error');
+        } finally {
+            setSubmittingPassword(false);
+        }
+    };
     if (!user) return null;
 
     const role = roleInfo[user.role] || roleInfo['ROLE_USER'];
@@ -110,7 +176,48 @@ const Settings = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                     <div>
                         <div style={labelStyle}>Full Name</div>
-                        <div style={valueStyle}>{user.name}</div>
+                        {isEditingName ? (
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <input 
+                                    value={newName} 
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    className="premium-input"
+                                    style={{ padding: '8px 12px', fontSize: '14px', flex: 1, margin: 0 }}
+                                />
+                                <button 
+                                    onClick={handleUpdateName}
+                                    disabled={submittingName}
+                                    style={{ 
+                                        padding: '8px 16px', background: 'var(--primary)', color: 'white', 
+                                        border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' 
+                                    }}
+                                >
+                                    {submittingName ? '...' : 'Save'}
+                                </button>
+                                <button 
+                                    onClick={() => { setIsEditingName(false); setNewName(user.name); }}
+                                    style={{ 
+                                        padding: '8px 16px', background: 'transparent', color: 'var(--text-muted)', 
+                                        border: '1px solid var(--border)', borderRadius: '10px', cursor: 'pointer' 
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={valueStyle}>{user.name}</div>
+                                <button 
+                                    onClick={() => setIsEditingName(true)}
+                                    style={{ 
+                                        background: 'transparent', border: 'none', color: '#60a5fa', 
+                                        cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' 
+                                    }}
+                                >
+                                    Edit
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div>
                         <div style={labelStyle}>User ID</div>
@@ -127,7 +234,6 @@ const Settings = () => {
                 </div>
             </div>
 
-            {/* Role Card */}
             <div style={{
                 ...cardStyle,
                 border: `1px solid ${role.border}`,
@@ -176,8 +282,129 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Security Section */}
+            <div style={cardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                    <div style={{ fontSize: '20px' }}>🔐</div>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Security & Password</div>
+                </div>
+
+                {!isChangingPassword ? (
+                    <div style={{ 
+                        padding: '24px', borderRadius: '18px', background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid var(--border)', textAlign: 'center' 
+                    }}>
+                        <div style={{ fontSize: '24px', marginBottom: '12px' }}>{user.hasPassword ? '🛡️' : '🔑'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
+                            {user.hasPassword ? 'Password Protection Active' : 'No Local Password Set'}
+                        </div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px', maxWidth: '400px', margin: '0 auto 20px' }}>
+                            {user.hasPassword 
+                                ? 'Your account is protected with a local password. You can change it at any time.' 
+                                : 'Setting a local password allows you to log in directly with your email address instead of using Google Sign-In.'}
+                        </div>
+                        <button 
+                            onClick={() => setIsChangingPassword(true)}
+                            style={{ 
+                                padding: '10px 24px', background: 'rgba(96, 165, 250, 0.1)', color: '#60a5fa', 
+                                border: '1px solid rgba(96, 165, 250, 0.2)', borderRadius: '12px', 
+                                cursor: 'pointer', fontWeight: '700', fontSize: '13px' 
+                            }}
+                        >
+                            {user.hasPassword ? 'Change Password' : 'Set Account Password'}
+                        </button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <div style={{ fontSize: '13px', color: '#60a5fa', fontWeight: '600' }}>
+                                {user.hasPassword ? '🔄 Updating current password' : '✨ Setting new account password'}
+                            </div>
+                            <button 
+                                type="button"
+                                onClick={() => setIsChangingPassword(false)}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '12px' }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+
+                        {user.hasPassword && (
+                            <div>
+                                <label style={labelStyle}>Current Password</label>
+                                <input 
+                                    type="password"
+                                    required
+                                    placeholder="Enter current password"
+                                    value={passwordData.currentPassword}
+                                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                                    style={inputFieldStyle}
+                                />
+                            </div>
+                        )}
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div>
+                                <label style={labelStyle}>New Password</label>
+                                <input 
+                                    type="password"
+                                    required
+                                    placeholder="Min 8 characters"
+                                    value={passwordData.newPassword}
+                                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                    style={inputFieldStyle}
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Confirm New Password</label>
+                                <input 
+                                    type="password"
+                                    required
+                                    placeholder="Repeat new password"
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                    style={inputFieldStyle}
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            type="submit"
+                            disabled={submittingPassword}
+                            style={{
+                                marginTop: '10px',
+                                padding: '14px',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '14px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                            }}
+                        >
+                            {submittingPassword ? 'Processing...' : (user.hasPassword ? 'Update Password' : 'Save New Password')}
+                        </button>
+                    </form>
+                )}
+            </div>
         </div>
     );
+};
+
+const inputFieldStyle = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid var(--border)',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    color: 'var(--text-main)',
+    fontSize: '14px',
+    marginTop: '6px',
+    outline: 'none',
+    boxSizing: 'border-box'
 };
 
 const badgeStyle = (color) => ({

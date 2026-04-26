@@ -39,11 +39,15 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Permit CORS preflight requests — must be first
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/error", "/login/**", "/oauth2/**").permitAll()
-                // Permit email/password auth endpoints
-                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                // Public auth endpoints — no token required
+                .requestMatchers(
+                    "/api/auth/login",
+                    "/api/auth/register",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2

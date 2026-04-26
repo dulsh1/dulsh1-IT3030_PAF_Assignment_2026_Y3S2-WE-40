@@ -43,8 +43,10 @@ const Navbar = () => {
         return null;
     }
 
+    
+
     const navStyle = {
-        background: 'rgba(15, 23, 42, 0.7)',
+        background: 'var(--glass-bg)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         padding: '12px 30px',
@@ -84,11 +86,8 @@ const Navbar = () => {
             <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div 
                     onClick={() => navigate('/dashboard')}
-                    style={{ margin: 0, marginRight: '30px', color: '#f8fafc', cursor: 'pointer', fontSize: '20px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '-0.5px' }}
+                    style={{ margin: 0, marginRight: '30px', color: 'var(--text-main)', cursor: 'pointer', fontSize: '22px', fontWeight: '900', letterSpacing: '-1px' }}
                 >
-                    <div style={{ background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)' }}>
-                        <span style={{fontSize: '20px', color: 'white'}}>🏫</span>
-                    </div>
                     SmartCampus
                 </div>
                 
@@ -98,7 +97,6 @@ const Navbar = () => {
                 {user.role === 'ROLE_ADMIN' && (
                     <Link to="/admin/bookings" style={linkStyle('/admin/bookings')}>Manage Bookings</Link>
                 )}
-                
                 {(user.role === 'ROLE_TECHNICIAN' || user.role === 'ROLE_ADMIN') && (
                     <Link to="/technician/desk" style={linkStyle('/technician/desk')}>Service Desk</Link>
                 )}
@@ -116,17 +114,42 @@ const Navbar = () => {
 
                 <div style={{ marginRight: '20px', height: '32px', width: '1px', background: 'var(--border)', marginLeft: '5px' }} />
 
-                <div style={{ marginRight: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ textAlign: 'right' }}>
-                        <div style={{ color: '#f8fafc', fontWeight: '700', fontSize: '13px' }}>{user.name}</div>
-                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {user.role.replace('ROLE_', '')}
-                        </div>
-                    </div>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#60a5fa', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Link 
+                    to="/settings" 
+                    style={{ 
+                        textDecoration: 'none', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px',
+                        padding: '6px 14px',
+                        borderRadius: '14px',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        background: location.pathname === '/settings' ? 'rgba(96, 165, 250, 0.1)' : 'transparent',
+                        border: '1px solid',
+                        borderColor: location.pathname === '/settings' ? 'rgba(96, 165, 250, 0.2)' : 'transparent',
+                        marginRight: '10px'
+                    }}
+                    onMouseOver={(e) => { 
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseOut={(e) => { 
+                        e.currentTarget.style.backgroundColor = location.pathname === '/settings' ? 'rgba(96, 165, 250, 0.1)' : 'transparent';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '13px' }}>{user.name}</div>
+                    <div style={{ 
+                        width: '36px', height: '36px', borderRadius: '12px', 
+                        background: 'rgba(255,255,255,0.05)', display: 'flex', 
+                        alignItems: 'center', justifyContent: 'center', 
+                        fontWeight: 'bold', color: '#60a5fa', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}>
                         {user.name.charAt(0)}
                     </div>
-                </div>
+                </Link>
                 
                 <button 
                     onClick={logout}

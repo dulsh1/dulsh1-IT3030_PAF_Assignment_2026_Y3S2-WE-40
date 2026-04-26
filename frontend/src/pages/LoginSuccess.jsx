@@ -18,7 +18,7 @@ const LoginSuccess = () => {
                     return;
                 }
                 if (user.role === 'ROLE_ADMIN') {
-                    navigate('/admin/panel');
+                    navigate('/dashboard');
                 } else if (user.role === 'ROLE_TECHNICIAN') {
                     navigate('/technician/desk');
                 } else {

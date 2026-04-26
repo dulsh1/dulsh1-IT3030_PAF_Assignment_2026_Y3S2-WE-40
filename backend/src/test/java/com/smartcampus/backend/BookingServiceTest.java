@@ -21,8 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for BookingService — Module B
- * Member: Anne (IT2345599)
+ * Unit tests for BookingService
  */
 @ExtendWith(MockitoExtension.class)
 class BookingServiceTest {

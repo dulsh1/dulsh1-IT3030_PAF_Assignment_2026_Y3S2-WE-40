@@ -3,6 +3,74 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
+import { generateReport } from '../utils/reportGenerator';
+
+const labelStyle = {
+    display: 'block', fontSize: '12px', fontWeight: '700',
+    color: 'var(--text-muted)', marginBottom: '6px',
+    textTransform: 'uppercase', letterSpacing: '0.5px',
+};
+
+const inputStyle = {
+    width: '100%', padding: '11px 14px', borderRadius: '10px',
+    border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)',
+    color: 'var(--text-main)', fontSize: '14px', outline: 'none',
+    boxSizing: 'border-box', transition: 'border-color 0.2s',
+};
+
+const Modal = ({ title, onClose, children }) => (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={onClose}>
+        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '24px', padding: '36px', width: '100%', maxWidth: '480px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>{title}</h2>
+                <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            {children}
+        </div>
+    </div>
+);
+
+// ── Assign Technician Modal ────────────────────────────────────────
+const AssignTechnicianModal = ({ ticket, technicians, onClose, onSuccess, showNotification }) => {
+    const [selectedId, setSelectedId] = useState(ticket.technician?.id || '');
+    const [loading, setLoading] = useState(false);
+    const handleAssign = async () => {
+        if (!selectedId) return;
+        setLoading(true);
+        try { 
+            await api.put(`/tickets/${ticket.id}/assign/${selectedId}`); 
+            showNotification(`Ticket #${ticket.id} assigned successfully.`, 'success'); 
+            onSuccess(); 
+            onClose(); 
+        }
+        catch (e) { showNotification('Failed to assign ticket.', 'error'); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Modal title={`🔧 Assign Ticket #${ticket.id}`} onClose={onClose}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>{ticket.category?.replace('_', ' ')} — {ticket.resource?.name}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-main)', fontWeight: '600' }}>{ticket.description?.substring(0, 80)}...</div>
+                </div>
+                <div>
+                    <label style={labelStyle}>Assign to Technician</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={selectedId} onChange={e => setSelectedId(e.target.value)} onFocus={e => e.target.style.borderColor = '#f59e0b'} onBlur={e => e.target.style.borderColor = 'var(--border)'}>
+                        <option value="">— Select a technician —</option>
+                        {technicians.map(t => <option key={t.id} value={t.id}>{t.name} ({t.email})</option>)}
+                    </select>
+                </div>
+                {technicians.length === 0 && <p style={{ color: '#f59e0b', fontSize: '13px', margin: 0 }}>⚠️ No technicians found in the system.</p>}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={onClose} style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '14px' }}>Cancel</button>
+                    <button onClick={handleAssign} disabled={loading || !selectedId} style={{ flex: 2, padding: '12px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '14px', boxShadow: '0 4px 14px rgba(245,158,11,0.3)', opacity: (loading || !selectedId) ? 0.6 : 1 }}>
+                        {loading ? 'Assigning...' : '🔧 Assign Technician'}
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
 
 // ── Resolve Modal ─────────────────────────────────────────────────
 const ResolveModal = ({ ticket, onClose, onSuccess, showNotification }) => {
@@ -64,9 +132,11 @@ const TechnicianDashboard = () => {
     const { showNotification } = useContext(NotificationContext);
 
     const [allTickets, setAllTickets] = useState([]);
+    const [technicians, setTechnicians] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('mine');
     const [resolveTicket, setResolveTicket] = useState(null);
+    const [assignTicket, setAssignTicket] = useState(null);
 
     const fetchTickets = () => {
         setLoading(true);
@@ -76,7 +146,14 @@ const TechnicianDashboard = () => {
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchTickets(); }, []);
+    useEffect(() => { 
+        fetchTickets(); 
+        if (user?.role === 'ROLE_ADMIN') {
+            api.get('/auth/users').then(res => {
+                setTechnicians(res.data.filter(u => u.role === 'ROLE_TECHNICIAN'));
+            }).catch(err => console.error("Failed to fetch technicians", err));
+        }
+    }, [user]);
 
     const claimTicket = async (ticketId) => {
         try {
@@ -129,7 +206,7 @@ const TechnicianDashboard = () => {
                 <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', color: statusColors[t.status] || '#94a3b8', background: `${statusColors[t.status] || '#94a3b8'}18` }}>{t.status?.replace('_', ' ')}</span>
             </td>
             <td style={{ padding: '16px 20px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button onClick={() => navigate(`/ticket/${t.id}`)}
                         style={{ padding: '6px 14px', background: 'transparent', color: 'var(--primary)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px' }}
                         onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
@@ -142,7 +219,13 @@ const TechnicianDashboard = () => {
                             Claim
                         </button>
                     )}
-                    {!showClaim && t.status === 'IN_PROGRESS' && (
+                    {user?.role === 'ROLE_ADMIN' && (t.status === 'OPEN' || t.status === 'IN_PROGRESS') && (
+                        <button onClick={() => setAssignTicket(t)}
+                            style={{ padding: '6px 14px', background: t.technician ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.2)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', boxShadow: '0 2px 8px rgba(245,158,11,0.2)' }}>
+                            {t.technician ? 'Reassign' : 'Assign'}
+                        </button>
+                    )}
+                    {!showClaim && t.status === 'IN_PROGRESS' && (t.technician?.id === user?.id) && (
                         <button onClick={() => setResolveTicket(t)}
                             style={{ padding: '6px 14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}>
                             Resolve
@@ -163,11 +246,116 @@ const TechnicianDashboard = () => {
         </thead>
     );
 
+    const cardStyle = { background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)' };
+
+
+    if (user?.role === 'ROLE_ADMIN') {
+        return (
+            <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', minHeight: 'calc(100vh - 70px)' }}>
+                {assignTicket && (
+                    <AssignTechnicianModal 
+                        ticket={assignTicket} 
+                        technicians={technicians} 
+                        onClose={() => setAssignTicket(null)} 
+                        onSuccess={fetchTickets} 
+                        showNotification={showNotification} 
+                    />
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                    <div>
+                        <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 8px 0', letterSpacing: '-1px' }}>
+                            🔧 Service Desk
+                        </h1>
+                        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '15px' }}>
+                            Administrative Oversight & Ticket Assignment
+                        </p>
+                    </div>
+                    <button onClick={fetchTickets} style={{ padding: '10px 20px', background: 'rgba(59,130,246,0.1)', color: 'var(--primary)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}>
+                        🔄 Refresh List
+                    </button>
+                </div>
+
+                <div style={cardStyle}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '12px' }}>
+                        <h3 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>🎫 Tickets Requiring Attention</h3>
+                        <div style={{ fontSize: '13px', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '10px', padding: '6px 14px' }}>
+                            👷 {technicians.length} technician{technicians.length !== 1 ? 's' : ''} available
+                        </div>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 24px 0' }}>
+                        Assign open incidents to technicians. They will receive a notification and can start work immediately.
+                    </p>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                    {['#', 'Incident', 'Priority', 'Status', 'Assigned To', 'Action'].map(h => (
+                                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').slice().reverse().map(t => {
+                                    const statusColors = { OPEN: '#ef4444', IN_PROGRESS: '#f59e0b', REJECTED: '#94a3b8' };
+                                    return (
+                                        <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                            <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>#{t.id}</td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '14px' }}>{t.resource?.name || '—'}</div>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.category?.replace('_', ' ')} — {t.description?.substring(0, 45)}...</div>
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}><span style={{ padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800', color: priorityColors[t.priority] || '#94a3b8', background: `${priorityColors[t.priority] || '#94a3b8'}18` }}>{t.priority}</span></td>
+                                            <td style={{ padding: '14px 16px' }}><span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', color: statusColors[t.status] || '#94a3b8', background: `${statusColors[t.status] || '#94a3b8'}18` }}>{t.status?.replace('_', ' ')}</span></td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                {t.technician ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', color: '#f59e0b' }}>{t.technician.name?.charAt(0)}</div>
+                                                        <span style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: '600' }}>{t.technician.name}</span>
+                                                    </div>
+                                                ) : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>Unassigned</span>}
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button onClick={() => navigate(`/ticket/${t.id}`)}
+                                                        style={{ padding: '7px 12px', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px' }}>
+                                                        View
+                                                    </button>
+                                                    <button onClick={() => setAssignTicket(t)}
+                                                        style={{ padding: '7px 16px', background: t.technician ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', color: t.technician ? '#f59e0b' : 'var(--primary)', border: `1px solid ${t.technician ? 'rgba(245,158,11,0.25)' : 'rgba(59,130,246,0.25)'}`, borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px' }}>
+                                                        {t.technician ? 'Reassign' : 'Assign'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {allTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length === 0 && (
+                                    <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>✨ All tickets are currently resolved. Good job!</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', minHeight: 'calc(100vh - 70px)' }}>
 
             {resolveTicket && (
                 <ResolveModal ticket={resolveTicket} onClose={() => setResolveTicket(null)} onSuccess={fetchTickets} showNotification={showNotification} />
+            )}
+
+            {assignTicket && (
+                <AssignTechnicianModal 
+                    ticket={assignTicket} 
+                    technicians={technicians} 
+                    onClose={() => setAssignTicket(null)} 
+                    onSuccess={fetchTickets} 
+                    showNotification={showNotification} 
+                />
             )}
 
             {/* Header */}
@@ -180,11 +368,16 @@ const TechnicianDashboard = () => {
                         Welcome back, <span style={{ color: '#f59e0b', fontWeight: '700' }}>{user?.name}</span>. Here's your work queue.
                     </p>
                 </div>
-                <button onClick={fetchTickets} style={{ padding: '10px 20px', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}
-                    onMouseOver={e => e.currentTarget.style.background = 'rgba(245,158,11,0.2)'}
-                    onMouseOut={e => e.currentTarget.style.background = 'rgba(245,158,11,0.1)'}>
-                    🔄 Refresh
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => generateReport(user, { tickets: myTickets }, 'TECH_PERFORMANCE')} style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        📥 Download Task Report
+                    </button>
+                    <button onClick={fetchTickets} style={{ padding: '10px 20px', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}
+                        onMouseOver={e => e.currentTarget.style.background = 'rgba(245,158,11,0.2)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'rgba(245,158,11,0.1)'}>
+                        🔄 Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Stats */}

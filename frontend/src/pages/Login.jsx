@@ -143,7 +143,7 @@ const Login = () => {
             const user = await login(token);
             if (!user) { setError('Authentication failed. Please try again.'); return; }
 
-            if (user.role === 'ROLE_ADMIN') navigate('/admin/panel');
+            if (user.role === 'ROLE_ADMIN') navigate('/dashboard');
             else if (user.role === 'ROLE_TECHNICIAN') navigate('/technician/desk');
             else navigate('/dashboard');
         } catch (err) {
@@ -199,13 +199,10 @@ const Login = () => {
 
             <div className="premium-card glass" style={{ width: '100%', maxWidth: '440px', padding: '50px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
 
-                {/* Logo */}
-                <div style={{ width: '70px', height: '70px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '20px', margin: '0 auto 25px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 20px rgba(59,130,246,0.3)', fontSize: '32px' }}>🏫</div>
-
-                <h1 style={{ fontSize: '30px', color: 'var(--text-main)', margin: '0 0 8px 0', letterSpacing: '-1px', fontWeight: '800' }}>
-                    Welcome to <span style={{ color: 'var(--primary)' }}>SmartCampus</span>
-                </h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
+                <div style={{ fontSize: '38px', fontWeight: '900', color: 'var(--text-main)', marginBottom: '32px', letterSpacing: '-1.5px', background: 'linear-gradient(135deg, #fff 0%, #60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    SmartCampus
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '15px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
                     The unified hub for university facilities and resource management.
                 </p>
 
@@ -309,7 +306,7 @@ const Login = () => {
 
                 <div style={{ marginTop: '24px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                        Internal Access Only &bull; University of Smart Campus
+                        Internal Access Only
                     </p>
                 </div>
             </div>

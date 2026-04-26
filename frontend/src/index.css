@@ -35,8 +35,21 @@ body {
     min-height: 100vh;
 }
 
+<<<<<<< Updated upstream
+* {
+    box-sizing: border-box;
+}
+
+input, select, textarea, button {
+    font-family: inherit;
+=======
 * { box-sizing: border-box; }
 input, select, textarea, button { font-family: inherit; }
+select option {
+    background-color: #ffffff;
+    color: #000000;
+>>>>>>> Stashed changes
+}
 
 @keyframes fadein {
     from { opacity: 0; transform: translateY(20px); }
